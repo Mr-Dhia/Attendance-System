@@ -17,7 +17,6 @@
 ├── application/plateforme/         # Fullstack Web Application
 │   ├── backend/                    # Express 5 REST API, MongoDB Mongoose, JWT Auth, UDP Discovery Listener
 │   └── attendance-system/          # SaaS Web Dashboard (React 19, Material UI, Tailwind CSS, Recharts)
-└── rapport/                        # Academic report and documentation (LaTeX & PDF)
 ```
 
 ---

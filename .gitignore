@@ -2,6 +2,9 @@
 node_modules/
 **/node_modules/
 
+# Dossier du rapport de stage (Exclu de Git)
+rapport/
+
 # Variables d'environnement & Secrets
 .env
 **/.env
@@ -22,7 +25,7 @@ Hardware/pointeuse/build/
 application/plateforme/backend/uploads/*
 !application/plateforme/backend/uploads/.gitkeep
 
-# Fichiers temporaires LaTeX (Rapport)
+# Fichiers temporaires LaTeX
 *.aux
 *.log
 *.out
