@@ -1,0 +1,391 @@
+/* Biometric & Modern Smooth Design Tokens & Color System */
+
+:root {
+  /* Surface colors */
+  --bio-bg-dark: #090d16;
+  --bio-surface-dark: #0f172a;
+  --bio-card-bg: rgba(15, 23, 42, 0.85);
+  --bio-card-border: rgba(56, 189, 248, 0.22);
+  
+  /* Harmonized Accent Palette */
+  --color-primary: #0284c7;       /* Sapphire Cyan */
+  --color-primary-light: #38bdf8;
+  --color-primary-glow: rgba(2, 132, 199, 0.35);
+
+  --color-accent-indigo: #6366f1; /* Deep Tech Violet */
+  --color-accent-indigo-light: #a5b4fc;
+
+  --color-success: #10b981;       /* Bio Emerald (Présent / Enrôlé) */
+  --color-success-bg: rgba(16, 185, 129, 0.14);
+  --color-success-border: rgba(16, 185, 129, 0.35);
+  --color-success-text: #34d399;
+
+  --color-warning: #f59e0b;       /* Amber Gold (Retard / En attente) */
+  --color-warning-bg: rgba(245, 158, 11, 0.14);
+  --color-warning-border: rgba(245, 158, 11, 0.35);
+  --color-warning-text: #fbbf24;
+
+  --color-danger: #f43f5e;        /* Rose Red (Absent / Danger) */
+  --color-danger-bg: rgba(244, 63, 94, 0.14);
+  --color-danger-border: rgba(244, 63, 94, 0.35);
+  --color-danger-text: #fb7185;
+
+  /* Text hierarchy */
+  --text-heading: #f8fafc;
+  --text-body: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+}
+
+body {
+  margin: 0;
+  background-color: #060913;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.12) 0%, transparent 40%),
+    radial-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px;
+  background-attachment: fixed;
+  color: var(--text-heading);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Masquer les flèches (spinners) dans les champs de type number (minutes, tolérances, etc.) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Glassmorphism Panels — Sleek, Lightweight & Compact */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(9, 13, 22, 0.92) 100%) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.28) !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08), 0 12px 36px 0 rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  padding: 28px 32px !important;
+  border-radius: 22px !important;
+  margin: 0 0 24px 0 !important;
+}
+
+.glass-panel:hover {
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.15), 0 18px 48px 0 rgba(2, 132, 199, 0.28) !important;
+  transform: translateY(-2px);
+}
+
+.glass-panel-glow {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 132, 199, 0.15) 100%) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 0 35px rgba(2, 132, 199, 0.3), 0 16px 44px 0 rgba(0, 0, 0, 0.6) !important;
+  padding: 32px 36px !important;
+  border-radius: 26px !important;
+  margin: 0 0 28px 0 !important;
+}
+
+/* Global margin on all MuiPaper cards/blocks — spacing between every block */
+.MuiPaper-root:not(.MuiDrawer-paper):not(.MuiMenu-paper):not(.MuiPopover-paper):not(.MuiDialog-paper):not(.MuiTableContainer-root):not(.MuiAccordion-root) {
+  margin: 12px 0 16px 0 !important;
+}
+
+/* Ensure glass panels keep their own bottom margin on top of the base */
+
+/* ── Global Icon ↔ Text spacing ── */
+/* SVG icon followed directly by a Typography or span gets left margin */
+.MuiSvgIcon-root + .MuiTypography-root,
+.MuiSvgIcon-root + span,
+.MuiSvgIcon-root + p {
+  margin-left: 7px !important;
+}
+
+/* Typography or span immediately before an SVG icon gets right margin */
+.MuiTypography-root + .MuiSvgIcon-root,
+span + .MuiSvgIcon-root {
+  margin-left: 7px !important;
+}
+
+/* ListItemIcon min-width so sidebar icons don't crowd the labels */
+.MuiListItemIcon-root {
+  min-width: 40px !important;
+}
+
+/* Buttons: ensure startIcon and endIcon have consistent gap */
+.MuiButton-startIcon {
+  margin-right: 8px !important;
+}
+.MuiButton-endIcon {
+  margin-left: 8px !important;
+}
+
+/* Universal Form Label & Floating Tag Styling */
+.MuiFormLabel-root,
+.MuiInputLabel-root {
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  z-index: 5 !important;
+}
+
+.MuiFormLabel-root.Mui-focused,
+.MuiInputLabel-root.Mui-focused {
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+.MuiInputLabel-shrink,
+.MuiFormLabel-root.MuiInputLabel-shrink,
+.MuiFormControl-root:has(input[type="date"]) .MuiInputLabel-root,
+.MuiInputBase-root:has(input[type="date"]) + .MuiInputLabel-root,
+input[type="date"] ~ label {
+  transform: translate(14px, -9px) scale(0.78) !important;
+  background-color: #0f172a !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+/* Compact Form Control, Select & Input Sizing */
+.MuiFormControl-root,
+.MuiTextField-root {
+  margin-top: 8px !important;
+  margin-bottom: 18px !important;
+  width: 100% !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 14px !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  color: #f8fafc !important;
+  min-width: 150px !important;
+}
+
+.MuiOutlinedInput-input {
+  padding: 11px 15px !important;
+  font-size: 14px !important;
+  color: #f8fafc !important;
+}
+
+.MuiSelect-select {
+  color: #f8fafc !important;
+  padding-right: 32px !important;
+  min-width: 130px !important;
+}
+
+/* Dropdown Menu Popover Item Padding & Styling */
+.MuiMenu-paper {
+  background: rgba(15, 23, 42, 0.96) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55) !important;
+}
+
+.MuiMenuItem-root {
+  padding: 10px 16px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #cbd5e1 !important;
+  border-radius: 8px !important;
+  margin: 3px 6px !important;
+}
+
+.MuiMenuItem-root:hover,
+.MuiMenuItem-root.Mui-selected {
+  background-color: rgba(6, 182, 212, 0.18) !important;
+  color: #38bdf8 !important;
+}
+
+/* Compact Table Padding & Sleek Row Clearance */
+.MuiTableCell-root {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  font-size: 14px !important;
+}
+
+.MuiTableCell-head {
+  padding-top: 18px !important;
+  padding-bottom: 18px !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+/* Refined Button Sizing & Padding */
+.MuiButton-root {
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  padding: 11px 24px !important;
+  font-size: 14px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  margin-right: 10px !important;
+}
+
+/* Primary Action Buttons */
+.MuiButton-containedPrimary {
+  background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%) !important;
+  box-shadow: 0 5px 20px rgba(2, 132, 199, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.MuiButton-containedPrimary:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #4f46e5 100%) !important;
+  box-shadow: 0 7px 26px rgba(2, 132, 199, 0.6) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Outlined Buttons */
+.MuiButton-outlined {
+  border-width: 1.5px !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  color: #38bdf8 !important;
+  padding: 10px 22px !important;
+}
+
+.MuiButton-outlined:hover {
+  border-color: #0284c7 !important;
+  background-color: rgba(2, 132, 199, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Table Row Action Icon Buttons */
+.MuiTableCell-root .MuiIconButton-root {
+  margin-left: 6px !important;
+  margin-right: 6px !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.25s ease !important;
+}
+
+.MuiTableCell-root .MuiIconButton-root:hover {
+  transform: scale(1.12) translateY(-2px) !important;
+  background-color: rgba(56, 189, 248, 0.22) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+/* Status Badges Styling */
+.badge-success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
+  font-weight: 700;
+  padding: 5px 12px !important;
+  border-radius: 10px !important;
+}
+
+.badge-warning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
+  font-weight: 700;
+  padding: 5px 12px !important;
+  border-radius: 10px !important;
+}
+
+.badge-danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
+  font-weight: 700;
+  padding: 5px 12px !important;
+  border-radius: 10px !important;
+}
+
+/* Smooth Fade In */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(2, 132, 199, 0.6);
+}
+
+/* Ensure fixed Sidebar Drawer paper stretches 100% of physical screen height despite zoom: 0.93 */
+.MuiDrawer-paper {
+  height: calc(100vh / 0.93) !important;
+  min-height: calc(100vh / 0.93) !important;
+  top: 0 !important;
+  bottom: 0 !important;
+}
+
+/* ── Futuristic Cyber-Biometric UI Enhancements ── */
+@keyframes neonPulse {
+  0% {
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  }
+}
+
+.cyber-glow {
+  animation: neonPulse 3s infinite ease-in-out;
+}
+
+.cyber-badge {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25) !important;
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+}
+
+.cyber-card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(9, 13, 22, 0.95) 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.cyber-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 16px 48px rgba(2, 132, 199, 0.3) !important;
+}
+

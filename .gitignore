@@ -1,0 +1,47 @@
+# Dépendances Node.js
+node_modules/
+**/node_modules/
+
+# Variables d'environnement & Secrets
+.env
+**/.env
+*.env
+!.env.example
+!**/.env.example
+
+# Fichiers de Build / Dist (React & Arduino)
+dist/
+**/dist/
+build/
+**/build/
+Hardware/pointeuse/build/
+*.orig
+*.step84
+
+# Fichiers téléversés (Photos / Uploads)
+application/plateforme/backend/uploads/*
+!application/plateforme/backend/uploads/.gitkeep
+
+# Fichiers temporaires LaTeX (Rapport)
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Logs & Archives
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.zip
+
+# Fichiers système & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.kiro/

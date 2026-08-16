@@ -1,0 +1,94 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="xsQt4P_0P5bbBY_YD2Ok">
+    <mxGraphModel dx="1141" dy="658" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-14" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-24" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;labelBackgroundColor=none;" value="Employé" vertex="1">
+          <mxGeometry height="60" width="30" x="40" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-20" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0.1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="63" y="240" />
+              <mxPoint x="150" y="240" />
+              <mxPoint x="150" y="150" />
+              <mxPoint x="494" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-25" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-36" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-37" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-38" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-39" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-2" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;labelBackgroundColor=none;" value="Admin&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="30" x="40" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-18" edge="1" parent="1" source="TDBOQ-QWCcDz1g3Tnd5l-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;dashPattern=8 8;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-19" connectable="0" parent="TDBOQ-QWCcDz1g3Tnd5l-18" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.234" as="geometry">
+            <mxPoint x="4" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-6" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="Ajouter un employé" vertex="1">
+          <mxGeometry height="50" width="120" x="200" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-11" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="Enroler une empreinte" vertex="1">
+          <mxGeometry height="50" width="160" x="414" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-16" parent="1" style="swimlane;startSize=0;labelBackgroundColor=none;" value="" vertex="1">
+          <mxGeometry height="580" width="660" x="90" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-17" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;labelBackgroundColor=none;" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: sans-serif; font-size: 14px; font-weight: 700; text-align: start; white-space: pre; background-color: rgb(254, 254, 254);&quot;&gt;Système de gestion des présences et contrôle d&#39;accès&lt;/span&gt;" vertex="1">
+          <mxGeometry height="40" width="150" x="270" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-27" edge="1" parent="TDBOQ-QWCcDz1g3Tnd5l-16" source="TDBOQ-QWCcDz1g3Tnd5l-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-30" edge="1" parent="TDBOQ-QWCcDz1g3Tnd5l-16" source="TDBOQ-QWCcDz1g3Tnd5l-23" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=none;fontColor=default;" target="TDBOQ-QWCcDz1g3Tnd5l-29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-23" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="S&#39;authentifier par empreinte" vertex="1">
+          <mxGeometry height="50" width="160" x="70" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-26" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="Accéder à une zone" vertex="1">
+          <mxGeometry height="60" width="120" x="340" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-29" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="enregistrer sa présence" vertex="1">
+          <mxGeometry height="40" width="150" x="310" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-31" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: sans-serif; font-size: 14px; text-align: start; white-space: pre; background-color: rgb(254, 254, 254);&quot;&gt;Consulter les présences&lt;/span&gt;" vertex="1">
+          <mxGeometry height="50" width="190" x="50" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-32" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: sans-serif; font-size: 14px; text-align: start; white-space: pre; background-color: rgb(254, 254, 254);&quot;&gt;Consulter les statistiques&lt;/span&gt;" vertex="1">
+          <mxGeometry height="50" width="190" x="55" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-34" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: sans-serif; font-size: 14px; text-align: start; white-space: pre; background-color: rgb(254, 254, 254);&quot;&gt;Gérer les employés&lt;/span&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="50" width="180" x="60" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="TDBOQ-QWCcDz1g3Tnd5l-35" parent="TDBOQ-QWCcDz1g3Tnd5l-16" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: sans-serif; font-size: 14px; text-align: start; white-space: pre; background-color: rgb(254, 254, 254);&quot;&gt;Se connecter au dashboard&lt;/span&gt;" vertex="1">
+          <mxGeometry height="50" width="200" x="50" y="490" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
