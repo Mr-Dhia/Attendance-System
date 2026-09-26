@@ -14,7 +14,8 @@ router.get("/pending-deletions", device, getPendingDeletions);
 router.get("/unassigned", device, getUnassignedEmployees);
 router.get("/time", (req, res) => {
   const now = new Date();
-  res.json({ epoch: Math.floor(now.getTime() / 1000), iso: now.toISOString() });
+  const localEpoch = Math.floor((now.getTime() - (now.getTimezoneOffset() * 60000)) / 1000);
+  res.json({ epoch: localEpoch, utcEpoch: Math.floor(now.getTime() / 1000), iso: now.toISOString() });
 });
 
 module.exports = router;

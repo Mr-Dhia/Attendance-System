@@ -1,6 +1,19 @@
 import axios from "axios";
 
-export const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+const getDynamicServerUrl = () => {
+  if (import.meta.env.VITE_SERVER_URL) {
+    return import.meta.env.VITE_SERVER_URL;
+  }
+  if (typeof window !== "undefined" && window.location && window.location.hostname) {
+    const host = window.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return `http://${host}:5000`;
+    }
+  }
+  return "http://localhost:5000";
+};
+
+export const SERVER_URL = getDynamicServerUrl();
 
 export const getPhotoUrl = (photoPath) => (photoPath ? `${SERVER_URL}${photoPath}` : "");
 

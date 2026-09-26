@@ -1,39 +1,56 @@
 int reconnaitreEmpreinte() {
+  keypad.poll();
+  uint8_t p = finger.getImage();
+  keypad.poll();
 
-  uint8_t p;
-
-  p = finger.getImage();
-
-  if (p == FINGERPRINT_NOFINGER)
+  if (p == FINGERPRINT_NOFINGER || p == FINGERPRINT_TIMEOUT || p == FINGERPRINT_PACKETRECIEVEERR)
     return -2;
 
-  if (p != FINGERPRINT_OK)
+  if (p != FINGERPRINT_OK) {
+    Serial.printf("[RECON] getImage err: 0x%02X\n", p);
     return -1;
+  }
 
-  p = finger.image2Tz();
-
-  if (p != FINGERPRINT_OK)
+  p = finger.image2Tz(1);
+  keypad.poll();
+  if (p != FINGERPRINT_OK) {
+    Serial.printf("[RECON] image2Tz err: 0x%02X\n", p);
     return -1;
+  }
 
-  p = finger.fingerSearch();
-
-  if (p == FINGERPRINT_NOTFOUND)
+  p = finger.fingerFastSearch();
+  keypad.poll();
+  if (p == FINGERPRINT_NOTFOUND) {
+    Serial.println("[RECON] Empreinte posee mais non trouvee en base (NOTFOUND)");
     return -3;
+  }
 
-  if (p != FINGERPRINT_OK)
+  if (p != FINGERPRINT_OK) {
+    Serial.printf("[RECON] fingerFastSearch err: 0x%02X\n", p);
     return -1;
+  }
 
+  Serial.printf("[RECON] SUCCES ! ID Empreinte: %d (Confiance: %d)\n", finger.fingerID, finger.confidence);
   return finger.fingerID;
 }
 
 bool attendreDoigt(bool present) {
+  unsigned long start = millis();
   while (true) {
+    keypad.poll();
     char touche = keypad.getKey();
     if (touche == '*') return false;
 
     uint8_t p = finger.getImage();
-    if (present && p == FINGERPRINT_OK) return true;
-    if (!present && p == FINGERPRINT_NOFINGER) return true;
+    if (present && p == FINGERPRINT_OK) {
+      Serial.println("[attendreDoigt] Doigt detecte (FINGERPRINT_OK) !");
+      return true;
+    }
+    if (!present && (p == FINGERPRINT_NOFINGER || p == FINGERPRINT_TIMEOUT || p == FINGERPRINT_PACKETRECIEVEERR)) {
+      return true;
+    }
+    yield();
+    delay(10);
   }
 }
 
@@ -61,7 +78,7 @@ bool enregistrerEmpreinte(uint8_t id, String employeeId) {
   // -------- VERIFICATION EXISTENCE --------
   Serial.println("Verification empreinte...");
 
-  p = finger.fingerSearch();
+  p = finger.fingerFastSearch();
 
   if (p == FINGERPRINT_OK) {
     Serial.print("Empreinte deja presente ID : ");

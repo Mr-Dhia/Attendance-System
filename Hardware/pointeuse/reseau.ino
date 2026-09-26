@@ -5,32 +5,57 @@ String httpPostJSON(const char* path, String body) {
   }
 
   Client* client = ethernetActif ? (Client*)&ethClient : (Client*)&wifiClient;
-  client->stop(); // S'assurer que le socket precedent est bien ferme
+  client->stop();
+  client->setTimeout(800);
 
-  HttpClient http(*client, SERVER_HOST_NAME, SERVER_PORT);
-  http.setHttpResponseTimeout(1000);
-  http.setTimeout(1000);
+  IPAddress targetIP;
+  bool isIP = targetIP.fromString(SERVER_HOST_NAME);
 
-  http.beginRequest();
-  http.post(path);
-  http.sendHeader("Content-Type", "application/json");
-  http.sendHeader("x-device-key", DEVICE_KEY);
-  http.sendHeader("Content-Length", body.length());
-  http.beginBody();
-  http.print(body);
-  http.endRequest();
-
-  int code = http.responseStatusCode();
-  String reponse = "";
-
-  if (code > 0) {
-    reponse = http.responseBody();
+  int connectOk = 0;
+  if (isIP) {
+    connectOk = client->connect(targetIP, SERVER_PORT);
   } else {
-    Serial.print("[HTTP POST] Erreur connexion code=");
-    Serial.println(code);
+    connectOk = client->connect(SERVER_HOST_NAME, SERVER_PORT);
   }
 
-  http.stop();
+  if (!connectOk) {
+    Serial.println("[HTTP POST] Erreur connexion socket");
+    client->stop();
+    return "";
+  }
+
+  client->print(String("POST ") + path + " HTTP/1.1\r\n" +
+                "Host: " + SERVER_HOST_NAME + ":" + String(SERVER_PORT) + "\r\n" +
+                "Content-Type: application/json\r\n" +
+                "x-device-key: " + DEVICE_KEY + "\r\n" +
+                "Content-Length: " + String(body.length()) + "\r\n" +
+                "Connection: close\r\n\r\n" +
+                body);
+
+  unsigned long start = millis();
+  while (client->available() == 0) {
+    if (millis() - start > 800) {
+      Serial.println("[HTTP POST] Timeout reponse serveur");
+      client->stop();
+      return "";
+    }
+    yield();
+    delay(2);
+  }
+
+  String reponse = "";
+  bool headersEnded = false;
+  while (client->available()) {
+    String line = client->readStringUntil('\n');
+    if (!headersEnded) {
+      if (line == "\r" || line.length() == 0) {
+        headersEnded = true;
+      }
+    } else {
+      reponse += line;
+    }
+  }
+
   client->stop();
   return reponse;
 }
@@ -40,27 +65,53 @@ String httpGetJSON(const char* path) {
 
   Client* client = ethernetActif ? (Client*)&ethClient : (Client*)&wifiClient;
   client->stop();
+  client->setTimeout(800);
 
-  HttpClient http(*client, SERVER_HOST_NAME, SERVER_PORT);
-  http.setHttpResponseTimeout(1000);
-  http.setTimeout(1000);
+  IPAddress targetIP;
+  bool isIP = targetIP.fromString(SERVER_HOST_NAME);
 
-  http.beginRequest();
-  http.get(path);
-  http.sendHeader("x-device-key", DEVICE_KEY);
-  http.endRequest();
-
-  int code = http.responseStatusCode();
-  String reponse = "";
-
-  if (code > 0) {
-    reponse = http.responseBody();
+  int connectOk = 0;
+  if (isIP) {
+    connectOk = client->connect(targetIP, SERVER_PORT);
   } else {
-    Serial.print("[HTTP GET] Erreur connexion code=");
-    Serial.println(code);
+    connectOk = client->connect(SERVER_HOST_NAME, SERVER_PORT);
   }
 
-  http.stop();
+  if (!connectOk) {
+    Serial.println("[HTTP GET] Erreur connexion socket");
+    client->stop();
+    return "";
+  }
+
+  client->print(String("GET ") + path + " HTTP/1.1\r\n" +
+                "Host: " + SERVER_HOST_NAME + ":" + String(SERVER_PORT) + "\r\n" +
+                "x-device-key: " + DEVICE_KEY + "\r\n" +
+                "Connection: close\r\n\r\n");
+
+  unsigned long start = millis();
+  while (client->available() == 0) {
+    if (millis() - start > 800) {
+      Serial.println("[HTTP GET] Timeout reponse serveur");
+      client->stop();
+      return "";
+    }
+    yield();
+    delay(2);
+  }
+
+  String reponse = "";
+  bool headersEnded = false;
+  while (client->available()) {
+    String line = client->readStringUntil('\n');
+    if (!headersEnded) {
+      if (line == "\r" || line.length() == 0) {
+        headersEnded = true;
+      }
+    } else {
+      reponse += line;
+    }
+  }
+
   client->stop();
   return reponse;
 }
@@ -176,6 +227,8 @@ void supprimerEmployeComplet() {
       dessinerAvertissement(tft.width() / 2, 95, 26, COULEUR_ERREUR, pulse);
     }
     touche = keypad.getKey();
+    yield();
+    delay(10);
   }
 
   if (touche == '*') {
@@ -286,6 +339,8 @@ int selectionnerEmploye(const char* type) {
     } else if (touche == '*') {
       return -1;
     }
+    yield();
+    delay(10);
   }
 }
 
@@ -300,7 +355,11 @@ String saisirMatricule() {
     dessinerChampSaisie("Matricule", saisie, false, COULEUR_ACCENT);
 
     char touche = 0;
-    while (!touche) touche = keypad.getKey();
+    while (!touche) {
+      touche = keypad.getKey();
+      yield();
+      delay(10);
+    }
 
     if (touche >= '0' && touche <= '9') {
       if (saisie.length() < 10) saisie += touche;
@@ -347,7 +406,11 @@ bool demanderPin() {
     dessinerChampSaisie("Code PIN", saisie, true, COULEUR_ACCENT);
 
     char touche = 0;
-    while (!touche) touche = keypad.getKey();
+    while (!touche) {
+      touche = keypad.getKey();
+      yield();
+      delay(10);
+    }
 
     if (touche >= '0' && touche <= '9') {
       if (saisie.length() < 8) saisie += touche;
@@ -520,11 +583,15 @@ String genererPagePortailHTML() {
 }
 
 String genererPageParamHTML() {
-  int n = WiFi.scanNetworks(false, false);
+  int n = WiFi.scanComplete();
+  if (n < 0) {
+    // Si aucun scan n'est prêt, on lance un scan rapide (80ms par canal au lieu de 300ms)
+    n = WiFi.scanNetworks(false, false, false, 80);
+  }
   String wifiOptions = F("<label>Réseaux Wi-Fi Détectés à proximité</label>"
                          "<select onchange='document.getElementById(\"wifi_ssid_input\").value = this.value;'>"
                          "<option value=''>-- ");
-  wifiOptions += String(n) + F(" réseaux trouvés (Cliquez pour sélectionner) --</option>");
+  wifiOptions += String(max(0, n)) + F(" réseaux trouvés (Cliquez pour sélectionner) --</option>");
 
   for (int i = 0; i < n; ++i) {
     String ssidScanne = WiFi.SSID(i);
@@ -848,8 +915,17 @@ void reconfigurerWiFi() {
 
   dessinerBarreAide("*=Quitter / Retour");
 
+  // Ne pas deconnecter le Wi-Fi s'il est deja connecte (permet l'acces web via l'IP WiFi locale)
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.disconnect(false, false);
+  }
   WiFi.mode(WIFI_AP_STA);
+  IPAddress apIP(192, 168, 4, 1);
+  IPAddress apGW(192, 168, 4, 1);
+  IPAddress apSN(255, 255, 255, 0);
+  WiFi.softAPConfig(apIP, apGW, apSN);
   WiFi.softAP("Pointeuse-Config", "12345678");
+  WiFi.scanNetworks(true /* async */); // Pre-charge la liste des reseaux Wi-Fi en arriere-plan
   wm.setConfigPortalTimeout(0);
   wm.setCaptivePortalEnable(false);
   wm.startWebPortal();
@@ -859,9 +935,12 @@ void reconfigurerWiFi() {
     wm.process();
     gererServeurWebEthernet();
     char k = keypad.getKey();
-    if (k == '*') break;
+    if (k) {
+      bipTouche();
+      if (k == '*') break;
+    }
     yield();
-    delay(10);
+    delay(2);
   }
 
   portailActif = false;
@@ -870,20 +949,25 @@ void reconfigurerWiFi() {
     afficherMessage("Config Enregistree !\nRedemarrage en cours...", ILI9341_GREEN);
     delay(1500);
     ESP.restart();
+  } else {
+    // Si l'utilisateur quitte avec '*', relancer la connexion Wi-Fi STA en arriere-plan
+    if (!ethernetActif) {
+      connecterWiFiSTA();
+    }
   }
 }
 
+bool w5500Initialise = false;
+
 bool reseauDisponible() {
-  if (ethernetActif) {
+  if (ETH_CS >= 0 && ethernetActif && w5500Initialise) {
     return (Ethernet.linkStatus() == LinkON && Ethernet.localIP() != IPAddress(0, 0, 0, 0));
   }
   return (WiFi.status() == WL_CONNECTED && WiFi.localIP() != IPAddress(0, 0, 0, 0));
 }
 
-bool w5500Initialise = false;
-
 unsigned long dernierVerifBascule = 0;
-const unsigned long INTERVALLE_VERIF_BASCULE = 300; // Verification ultra-rapide toutes les 300ms
+const unsigned long INTERVALLE_VERIF_BASCULE = 2000; // Verification toutes les 2s
 unsigned long debutTransitionWiFi = 0;
 
 void connecterWiFiSTA() {
@@ -900,6 +984,10 @@ void connecterWiFiSTA() {
 
   Serial.println("[ETAPE 2/5] Activation du mode hybride WIFI_AP_STA");
   WiFi.mode(WIFI_AP_STA);
+  IPAddress apIP(192, 168, 4, 1);
+  IPAddress apGW(192, 168, 4, 1);
+  IPAddress apSN(255, 255, 255, 0);
+  WiFi.softAPConfig(apIP, apGW, apSN);
   WiFi.softAP("Pointeuse-Config", "12345678");
 
   if (ssid.length() > 0) {
@@ -934,7 +1022,7 @@ void verifierBasculeReseau() {
     Serial.flush();
   }
 
-  bool ethDisponible = (Ethernet.linkStatus() == LinkON);
+  bool ethDisponible = (ETH_CS >= 0 && w5500Initialise && Ethernet.linkStatus() == LinkON);
 
   if (ethDisponible && !ethernetActif) {
     if (demarrerEthernet()) {
@@ -962,39 +1050,38 @@ void verifierBasculeReseau() {
   }
 
   bool enTransition = (debutTransitionWiFi > 0 && millis() - debutTransitionWiFi < 3000);
-  bool toutOk = reseauDisponible() && testerConnexionServeur();
+  bool toutOk = reseauDisponible();
 
   if (!ancienEtatComplet && toutOk) {
-    ecranErreurActif = false;
-    synchroniserHeure();
-    afficherAccueil();
     debutTransitionWiFi = 0;
   } else if (ancienEtatComplet && !toutOk && !enTransition) {
     if (!ethernetActif && WiFi.status() != WL_CONNECTED) {
-      Serial.println("[Bascule DIAG] WiFi non connecte pendant la perte de serveur -> Relance connecterWiFiSTA()");
+      Serial.println("[Bascule DIAG] WiFi deconnecte -> Relance connecterWiFiSTA()");
       Serial.flush();
       connecterWiFiSTA();
     }
-    ecranErreurActif = true;
   }
 
   ancienEtatComplet = toutOk;
 }
 
 bool synchroniserHeure() {
+  if (!reseauDisponible()) return false;
+  unsigned long tStart = millis();
   String reponse = httpGetJSON("/api/fingerprint/time");
   if (reponse.length() > 0 && reponse.indexOf("\"epoch\"") >= 0) {
     DynamicJsonDocument doc(256);
     DeserializationError err = deserializeJson(doc, reponse);
     if (!err && doc.containsKey("epoch")) {
       unsigned long epochServeur = doc["epoch"].as<unsigned long>();
-      decalageEpoch = (epochServeur + 3600) - (millis() / 1000); // UTC+1
+      unsigned long latenceSec = (millis() - tStart) / 2000; // Demi-temps d'aller-retour en secondes
+      decalageEpoch = (epochServeur + latenceSec) - (millis() / 1000);
       heureInitialisee = true;
-      Serial.println("[Heure] Synchronise avec le serveur : epoch=" + String(epochServeur));
+      Serial.println("[Heure] Synchronise avec le serveur backend : epoch=" + String(epochServeur) + " (Latence: " + String(latenceSec) + "s)");
       return true;
     }
   }
-  Serial.println("[Heure] Serveur injoignable - heure non mise a jour");
+  Serial.println("[Heure] Serveur injoignable - poursuite sur horloge locale ESP32");
   return false;
 }
 
@@ -1002,63 +1089,108 @@ bool obtenirHeureActuelle(struct tm &infoTemps) {
   if (!heureInitialisee) return false;
 
   time_t epochActuel = decalageEpoch + (millis() / 1000);
-  infoTemps = *localtime(&epochActuel);
+  infoTemps = *gmtime(&epochActuel);
   return true;
 }
 
 bool decouvrirServeurUDP() {
   if (!reseauDisponible()) return false;
 
-  if (strlen(SERVER_HOST_NAME) > 0) {
-    return false;
-  }
+  Serial.println("\n[UDP Discovery] Recherche du serveur backend sur le reseau...");
 
-  UDP& udpClient = ethernetActif ? (UDP&)ntpUDPEthernet : (UDP&)ntpUDPWifi;
-  udpClient.begin(5001);
+  WiFiUDP udpWifi;
+  EthernetUDP udpEth;
+  UDP* udpClient = (ETH_CS >= 0 && ethernetActif) ? (UDP*)&udpEth : (UDP*)&udpWifi;
 
-  IPAddress broadcastIP(255, 255, 255, 255);
-  udpClient.beginPacket(broadcastIP, 5001);
-  udpClient.write((const uint8_t*)"DISCOVER_POINTEUSE_SERVER", 25);
-  udpClient.endPacket();
+  udpClient->stop();
+  udpClient->begin(5001);
 
-  unsigned long start = millis();
-  while (millis() - start < 1500) {
-    int packetSize = udpClient.parsePacket();
-    if (packetSize) {
-      IPAddress remoteIP = udpClient.remoteIP();
+  // Determiner les adresses de broadcast adaptatives
+  IPAddress bcastAll(255, 255, 255, 255);
+  IPAddress bcastSubnet = (ETH_CS >= 0 && ethernetActif) ? bcastAll : WiFi.broadcastIP();
+
+  Serial.println("[UDP Discovery] Envoi requete vers " + bcastSubnet.toString() + ":5001");
+
+  unsigned long debut = millis();
+  int broadcastCount = 0;
+  unsigned long dernierEnvoi = 0;
+
+  while (millis() - debut < 3200) {
+    // Re-emettre toutes les 400ms (4 fois au total)
+    if (millis() - dernierEnvoi >= 400 && broadcastCount < 4) {
+      dernierEnvoi = millis();
+      broadcastCount++;
+
+      // 1. Broadcast vers le sous-reseau local (ex: 192.168.1.255)
+      udpClient->beginPacket(bcastSubnet, 5001);
+      udpClient->write((const uint8_t*)"DISCOVER_POINTEUSE_SERVER", 25);
+      udpClient->endPacket();
+
+      // 2. Broadcast global (255.255.255.255)
+      if (bcastSubnet != bcastAll) {
+        udpClient->beginPacket(bcastAll, 5001);
+        udpClient->write((const uint8_t*)"DISCOVER_POINTEUSE_SERVER", 25);
+        udpClient->endPacket();
+      }
+
+      // 3. Unicast si IP deja connue dans SERVER_HOST_NAME (si router bloque le broadcast)
+      if (strlen(SERVER_HOST_NAME) > 0) {
+        IPAddress unicastIP;
+        if (unicastIP.fromString(SERVER_HOST_NAME)) {
+          udpClient->beginPacket(unicastIP, 5001);
+          udpClient->write((const uint8_t*)"DISCOVER_POINTEUSE_SERVER", 25);
+          udpClient->endPacket();
+        }
+      }
+    }
+
+    int packetSize = udpClient->parsePacket();
+    if (packetSize > 0) {
+      IPAddress remoteIP = udpClient->remoteIP();
       char response[64];
-      int len = udpClient.read(response, sizeof(response) - 1);
+      int len = udpClient->read(response, sizeof(response) - 1);
       if (len > 0) response[len] = 0;
+
+      Serial.print("[UDP Discovery] Reponse recue de ");
+      Serial.print(remoteIP.toString());
+      Serial.print(" : ");
+      Serial.println(response);
 
       if (String(response).indexOf("POINTEUSE_SERVER_HERE") >= 0) {
         String ipStr = remoteIP.toString();
         ipStr.toCharArray(SERVER_HOST_NAME, sizeof(SERVER_HOST_NAME));
-        Serial.print("Serveur auto-detecte via UDP : ");
-        Serial.println(SERVER_HOST_NAME);
+        Serial.println("[UDP Discovery] >>> SUCCES : Serveur auto-detecte sur : " + String(SERVER_HOST_NAME) + " <<<");
+
         Preferences prefs;
         prefs.begin("pointeuse", false);
         prefs.putString("server_ip", SERVER_HOST_NAME);
         prefs.end();
-        udpClient.stop();
+
+        udpClient->stop();
         return true;
       }
     }
-    delay(50);
+
+    yield();
+    delay(10);
   }
-  udpClient.stop();
+
+  udpClient->stop();
+  Serial.println("[UDP Discovery] Aucun serveur detecte (Timeout).");
   return false;
 }
 
 bool demarrerEthernet() {
-  digitalWrite(TFT_CS, HIGH);
-  delayMicroseconds(10);
+  if (ETH_CS < 0) {
+    return false; // W5500 Ethernet non configure / desactive
+  }
 
   if (!w5500Initialise) {
     afficherEcranConnexionEthernet();
 
     bool hardwareOk = false;
-    for (int i = 0; i < 10; i++) {
-      delay(100);
+    for (int i = 0; i < 4; i++) {
+      delay(50);
       SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
       digitalWrite(ETH_CS, LOW);
       delayMicroseconds(10);
@@ -1085,7 +1217,18 @@ bool demarrerEthernet() {
     }
   }
 
-  if (Ethernet.linkStatus() != LinkON) {
+  // Attendre que le lien PHY Ethernet se stabilise (jusqu'a 1.5s)
+  bool linkOk = false;
+  for (int retry = 0; retry < 5; retry++) {
+    if (Ethernet.linkStatus() == LinkON) {
+      linkOk = true;
+      break;
+    }
+    delay(300);
+  }
+
+  if (!linkOk) {
+    Serial.println("[Ethernet] Cable Ethernet non branche ou lien inactif (LinkOFF).");
     return false;
   }
 
@@ -1104,10 +1247,10 @@ bool demarrerEthernet() {
     Serial.println(ETH_STATIC_IP);
     Ethernet.begin(mac, staticIP, staticDNS, staticGW, staticSN);
   } else {
-    Serial.println("[Ethernet] DHCP rapide (timeout 2500ms)...");
-    int dhcpResult = Ethernet.begin(mac, 2500, 1000);
+    Serial.println("[Ethernet] Négociation DHCP en cours (timeout 10000ms)...");
+    int dhcpResult = Ethernet.begin(mac, 10000, 4000);
     if (dhcpResult == 0) {
-      Serial.println("[Ethernet] Echec DHCP Ethernet.");
+      Serial.println("[Ethernet] Echec DHCP Ethernet. Verifiez le cable RJ45 et le routeur.");
       return false;
     }
     Serial.println("[Ethernet] IP DHCP obtenue : " + Ethernet.localIP().toString());
@@ -1117,9 +1260,29 @@ bool demarrerEthernet() {
 }
 
 bool testerConnexionServeur() {
-  if (!reseauDisponible()) return false;
+  if (!reseauDisponible()) {
+    Serial.println("[TEST SERVEUR] Reseau non disponible.");
+    return false;
+  }
+  if (strlen(SERVER_HOST_NAME) == 0) {
+    Serial.println("[TEST SERVEUR] SERVER_HOST_NAME est vide !");
+    return false;
+  }
+
+  Serial.print("[TEST SERVEUR] Test HTTP vers http://");
+  Serial.print(SERVER_HOST_NAME);
+  Serial.print(":");
+  Serial.print(SERVER_PORT);
+  Serial.println("/api/fingerprint/time");
+
   String reponse = httpGetJSON("/api/fingerprint/time");
-  return (reponse.length() > 0);
+  if (reponse.length() > 0) {
+    Serial.println("[TEST SERVEUR] SUCCES ! Serveur backend joignable (Reponse: " + reponse + ")");
+    return true;
+  } else {
+    Serial.println("[TEST SERVEUR] ECHEC : Requete HTTP /api/fingerprint/time n'a pas repondu.");
+    return false;
+  }
 }
 
 
@@ -1137,57 +1300,100 @@ void attendreReseauEtServeur() {
 
   // Lancer immediatement la tentative de connexion WiFi STA si Ethernet est inactif
   if (!ethernetActif && WiFi.status() != WL_CONNECTED) {
-    Serial.println("[CONNEXION] Ethernet inactif -> Lancement connexion Wi-Fi au demarrage...");
+    Serial.println("[CONNEXION] Ethernet inactif -> Lancement connexion Wi-Fi...");
     connecterWiFiSTA();
   }
 
-  unsigned long debutGrace = millis();
-  unsigned long dernierEssaiWiFiGrace = millis();
-
-  while (millis() - debutGrace < 8000) {
-    if (!ethernetActif && WiFi.status() != WL_CONNECTED && (millis() - dernierEssaiWiFiGrace > 3000)) {
-      dernierEssaiWiFiGrace = millis();
-      Serial.println("[CONNEXION] Relance connexion Wi-Fi pendant la periode de grace...");
-      connecterWiFiSTA();
-    }
-
-    if (reseauDisponible() && testerConnexionServeur()) {
-      etatReseauActuel = MODE_RESEAU_OK;
-      ecranErreurActif = false;
-      ledConnexion(false);
-      return;
-    }
-    wm.process();
-    gererServeurWebEthernet();
-    delay(250);
+  // Verifier si la connexion et le serveur sont deja operationnels
+  if (reseauDisponible() && testerConnexionServeur()) {
+    etatReseauActuel = MODE_RESEAU_OK;
+    ecranErreurActif = false;
+    ledConnexion(false);
+    return;
   }
 
   ecranErreurActif = true;
   ecranAccueil = false;
-  ModeEtatReseau dernierEtatAffiche = MODE_RESEAU_OK;
+  ModeEtatReseau dernierEtatAffiche = (ModeEtatReseau)-1;
   unsigned long dernierEssaiConnect = 0;
-  const unsigned long INTERVALLE_ESSAI = 3000;
+  const unsigned long INTERVALLE_ESSAI = 4000;
 
-  Serial.println("[CONNEXION] Erreur persisante - affichage ecran d'erreur...");
+  Serial.println("[CONNEXION] Erreur persistante - affichage ecran d'erreur et ecoute clavier active...");
 
   while (true) {
+    // 1. POLLING DU CLAVIER EN PRIORITE ABSOLUE (Reponse instantanee <10ms)
+    char key = keypad.getKey();
+    if (key) {
+      bipTouche();
+      Serial.printf("[CONNEXION] Touche pressee : '%c'\n", key);
+
+      if (key == '#') {
+        Serial.println("[CONNEXION] Touche '#' pressee -> Ouverture immediate du Portail de Configuration Wi-Fi");
+        reconfigurerWiFi();
+        // Au retour du portail, forcer le re-affichage de l'ecran d'erreur
+        dernierEtatAffiche = (ModeEtatReseau)-1;
+        dernierEssaiConnect = millis();
+        continue;
+      } else if (key == '*') {
+        Serial.println("[CONNEXION] Touche '*' pressee -> Re-verification demandee par l'utilisateur");
+        afficherMessage("Verification...", ILI9341_WHITE);
+        delay(300);
+        if (reseauDisponible() && !testerConnexionServeur()) {
+          afficherMessage("Recherche serveur...", ILI9341_WHITE);
+          decouvrirServeurUDP();
+        }
+        if (reseauDisponible() && testerConnexionServeur()) {
+          etatReseauActuel = MODE_RESEAU_OK;
+          ecranErreurActif = false;
+          synchroniserHeure();
+          afficherAccueil();
+          ledConnexion(false);
+          return;
+        } else {
+          dernierEtatAffiche = (ModeEtatReseau)-1;
+          dernierEssaiConnect = millis();
+        }
+      }
+    }
+
+    // 2. Traitement d'arriere-plan (WebPortal, Ethernet, Bascule de lien physique)
     wm.process();
     gererServeurWebEthernet();
     verifierBasculeReseau();
 
+    // 3. Evaluation periodique de l'etat reseau & serveur
     unsigned long maintenant = millis();
     bool netOk = reseauDisponible();
     ModeEtatReseau nouvelEtat = netOk ? MODE_ERREUR_SERVEUR : MODE_ERREUR_RESEAU;
 
+    static unsigned long dernierAutoUDP = 0;
     if (netOk && (maintenant - dernierEssaiConnect > INTERVALLE_ESSAI)) {
       dernierEssaiConnect = maintenant;
-      if (testerConnexionServeur()) nouvelEtat = MODE_RESEAU_OK;
+      if (testerConnexionServeur()) {
+        etatReseauActuel = MODE_RESEAU_OK;
+        ecranErreurActif = false;
+        synchroniserHeure();
+        afficherAccueil();
+        ledConnexion(false);
+        return;
+      } else if (maintenant - dernierAutoUDP > 12000) {
+        dernierAutoUDP = maintenant;
+        Serial.println("[CONNEXION] Serveur non joignable -> Tentative auto-detection UDP...");
+        if (decouvrirServeurUDP()) {
+          if (testerConnexionServeur()) {
+            etatReseauActuel = MODE_RESEAU_OK;
+            ecranErreurActif = false;
+            synchroniserHeure();
+            afficherAccueil();
+            ledConnexion(false);
+            return;
+          }
+        }
+      }
     }
 
-    // Redessiner si l'etat change OU si quelque chose a ecrase notre ecran
-    bool ecranEcrase = (ecranAccueil || (nouvelEtat == dernierEtatAffiche
-                        && nouvelEtat != MODE_RESEAU_OK && millis() % 10000 < 20));
-    if (nouvelEtat != dernierEtatAffiche || ecranEcrase) {
+    // 4. Mise a jour de l'affichage seulement si l'etat change
+    if (nouvelEtat != dernierEtatAffiche) {
       dernierEtatAffiche = nouvelEtat;
       etatReseauActuel = nouvelEtat;
       ecranAccueil = false;
@@ -1196,55 +1402,26 @@ void attendreReseauEtServeur() {
         afficherEcranErreurReseau("ERREUR RESEAU",
           "Connexion Ethernet ou WiFi absente. Verifiez le cable ou le signal.");
       } else if (nouvelEtat == MODE_ERREUR_SERVEUR) {
-        decouvrirServeurUDP();
         afficherEcranErreurReseau("SERVEUR INDISPONIBLE",
           "Serveur backend (" + String(SERVER_HOST_NAME) + ":" + String(SERVER_PORT) + ") injoignable.");
-      } else {
-        // RESOLU
-        ecranErreurActif = false;
-        synchroniserHeure();
-        afficherAccueil();
-        break;
       }
-    }
-
-    char key = keypad.getKey();
-    if (key == '*') {
-      afficherMessage("Verification...", ILI9341_WHITE);
-      delay(400);
-      if (reseauDisponible() && testerConnexionServeur()) {
-        ecranErreurActif = false;
-        synchroniserHeure();
-        afficherAccueil();
-        break;
-      } else {
-        dernierEtatAffiche = MODE_RESEAU_OK; // Force redraw
-      }
-    } else if (key == '#') {
-      reconfigurerWiFi();
-      dernierEtatAffiche = MODE_RESEAU_OK;
     }
 
     yield();
-    delay(1);
+    delay(10);
   }
 
   etatReseauActuel = MODE_RESEAU_OK;
 }
 
-// Verification serveur en continu (a appeler dans loop() toutes les 5s).
+// Verification de la connexion reseau en continu dans loop()
 void verifierServeurEnContinu() {
-  static unsigned long dernierCheck = 0;
-  const unsigned long INTERVALLE = 5000;
-  if (millis() - dernierCheck < INTERVALLE) return;
-  dernierCheck = millis();
-
   // Ignorer pendant la transition de 5s post-deconnexion Ethernet
   if (debutTransitionWiFi > 0 && millis() - debutTransitionWiFi < 5000) {
     return;
   }
 
-  if (!reseauDisponible() || !testerConnexionServeur()) {
+  if (!reseauDisponible()) {
     attendreReseauEtServeur();
   }
 }
@@ -1261,6 +1438,9 @@ void chargerParametresNVS() {
     SERVER_HOST_NAME[sizeof(SERVER_HOST_NAME) - 1] = '\0';
     Serial.print("[NVS] IP Serveur Backend chargee : ");
     Serial.println(SERVER_HOST_NAME);
+  } else if (strlen(SERVER_HOST_NAME) == 0) {
+    strncpy(SERVER_HOST_NAME, "192.168.1.14", sizeof(SERVER_HOST_NAME) - 1);
+    Serial.println("[NVS] IP Serveur Backend par defaut : 192.168.1.14");
   }
 
   String ethIP = prefs.getString("eth_ip", "");

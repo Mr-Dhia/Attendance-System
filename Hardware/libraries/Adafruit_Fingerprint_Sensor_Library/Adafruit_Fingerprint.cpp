@@ -481,6 +481,10 @@ uint8_t Adafruit_Fingerprint::setPacketSize(uint8_t size) {
 void Adafruit_Fingerprint::writeStructuredPacket(
     const Adafruit_Fingerprint_Packet &packet) {
 
+  while (mySerial->available()) {
+    mySerial->read();
+  }
+
   mySerial->write((uint8_t)(packet.start_code >> 8));
   mySerial->write((uint8_t)(packet.start_code & 0xFF));
   mySerial->write(packet.address[0]);

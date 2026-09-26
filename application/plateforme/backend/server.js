@@ -7,8 +7,22 @@ require("dotenv").config();
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173", // URL de votre React
-  credentials: true, // autorise les cookies cross-origin
+  origin: function (origin, callback) {
+    // Autoriser les requêtes sans origin (ex: Postman, mobile native, ESP32)
+    if (!origin) return callback(null, true);
+    // Autoriser tout origin local ou sur le réseau LAN (localhost, 127.0.0.1, 192.168.x.x, 10.x.x.x)
+    if (
+      origin.startsWith("http://localhost") ||
+      origin.startsWith("http://127.0.0.1") ||
+      origin.startsWith("http://192.168.") ||
+      origin.startsWith("http://10.") ||
+      origin.startsWith("http://172.")
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());

@@ -14,11 +14,35 @@ void texteCentre(String texte, int y, uint16_t coul, int taille);
 void texteMultiLignesMots(String texte, int yDepart, uint16_t couleur, uint8_t tailleText, int maxCarParLigne);
 void dessinerEntete(String titre, int type);
 void dessinerBarreAide(String texte);
-void afficherStatutConnexion();
+void testerCouleursEcran() {
+  tft.fillScreen(ILI9341_BLACK);
+  int h = tft.height() / 5;
 
-// Flags globaux
-bool ecranErreurActif = false;
-bool setupTermine = false; // Devient true a la fin de setup() : bloque les ecrans de connexion apres le demarrage
+  // 1. ROUGE (Pure Red)
+  tft.fillRect(0, 0 * h, tft.width(), h, ILI9341_RED);
+  tft.setTextSize(2); tft.setTextColor(ILI9341_WHITE);
+  tft.setCursor(20, 0 * h + 10); tft.print("1. ROUGE (RED)");
+
+  // 2. VERT (Pure Green)
+  tft.fillRect(0, 1 * h, tft.width(), h, ILI9341_GREEN);
+  tft.setTextSize(2); tft.setTextColor(ILI9341_BLACK);
+  tft.setCursor(20, 1 * h + 10); tft.print("2. VERT (GREEN)");
+
+  // 3. BLEU (Pure Blue)
+  tft.fillRect(0, 2 * h, tft.width(), h, ILI9341_BLUE);
+  tft.setTextSize(2); tft.setTextColor(ILI9341_WHITE);
+  tft.setCursor(20, 2 * h + 10); tft.print("3. BLEU (BLUE)");
+
+  // 4. JAUNE (Pure Yellow)
+  tft.fillRect(0, 3 * h, tft.width(), h, ILI9341_YELLOW);
+  tft.setTextSize(2); tft.setTextColor(ILI9341_BLACK);
+  tft.setCursor(20, 3 * h + 10); tft.print("4. JAUNE (YELLOW)");
+
+  // 5. BLANC (Pure White)
+  tft.fillRect(0, 4 * h, tft.width(), h, ILI9341_WHITE);
+  tft.setTextSize(2); tft.setTextColor(ILI9341_BLACK);
+  tft.setCursor(20, 4 * h + 10); tft.print("5. BLANC (WHITE)");
+}
 
 void mettreAJourBarreProgression(int etape, int total) {
   if (setupTermine) return; // Uniquement au demarrage
@@ -169,10 +193,8 @@ void texteCentre(String texteBrut, int y, uint16_t couleur, uint8_t taille) {
   String texte = nettoyerAccents(texteBrut);
   tft.setTextSize(taille);
   tft.setTextColor(couleur);
-  int16_t x1, y1;
-  uint16_t w, h;
-  tft.getTextBounds(texte, 0, 0, &x1, &y1, &w, &h);
-  int x = (tft.width() - (int)w) / 2;
+  int w = texte.length() * 6 * (int)taille;
+  int x = (tft.width() - w) / 2;
   if (x < 0) x = 0;
   tft.setCursor(x, y);
   tft.println(texte);
@@ -201,9 +223,7 @@ void texteMultiLignesMots(String texteBrut, int startY, uint16_t couleur, uint8_
     if (word.length() == 0) continue;
 
     String testLine = currentLine.length() > 0 ? (currentLine + " " + word) : word;
-    int16_t x1, y1;
-    uint16_t w, h;
-    tft.getTextBounds(testLine, 0, 0, &x1, &y1, &w, &h);
+    int w = testLine.length() * 6 * (int)taille;
 
     if (w > maxWidth && currentLine.length() > 0) {
       texteCentre(currentLine, currentY, couleur, taille);
@@ -398,6 +418,8 @@ int afficherMenuSuppression() {
       tft.fillCircle(cx2 + 20, cy + 18, r, COULEUR_ATTENTE);
       texteCentreZone("2", cx2 + 8, 24, cy + 11, COULEUR_FOND, 1);
     }
+    yield();
+    delay(10);
   }
 }
 
@@ -420,17 +442,8 @@ void mettreAJourHorloge(bool forcer) {
   // Ne redessine que si l'heure affichee a reellement change
   if (nouvelleHeure == derniereHeureAffichee && !forcer) return;
 
-  tft.setTextSize(4);
-  int16_t x1, y1;
-  uint16_t w, h;
-
-  // Efface uniquement l'ancien texte (pas toute la largeur de l'ecran)
-  if (derniereHeureAffichee.length() > 0) {
-    tft.getTextBounds(derniereHeureAffichee, 0, 0, &x1, &y1, &w, &h);
-    int xAncien = (tft.width() - (int)w) / 2;
-    tft.fillRect(xAncien - 2, 46, w + 4, h + 4, COULEUR_FOND);
-  }
-
+  // Effacer la zone de l'horloge sans calcul de texte lourd (super rapide et sans scintillement)
+  tft.fillRect(35, 46, 250, 36, COULEUR_FOND);
   texteCentre(nouvelleHeure, 50, COULEUR_TEXTE, 4);
   derniereHeureAffichee = nouvelleHeure;
 
@@ -528,6 +541,7 @@ void afficherEcranIPs() {
 
 void afficherEcranErreurReseau(String titre, String raison) {
   ecranAccueil = false;
+  ecranErreurActif = true;
   tft.fillScreen(COULEUR_FOND);
   dessinerEntete(titre, 2);
 

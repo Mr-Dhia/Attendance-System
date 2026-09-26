@@ -1,23 +1,20 @@
 #include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ILI9341.h>
+#include <Wire.h>
+#include <Arduino_GFX_Library.h>
 #include <Adafruit_Fingerprint.h>
 #include <WiFi.h>
-// HTTPClient.h supprime : ArduinoHttpClient gere les requetes HTTP
-// pour Ethernet ET WiFi via un Client* generique
-#include <Keypad.h>
+
 #include <ArduinoJson.h>
-#define MAX_SOCK_NUM 2  // Limite le W5500 a 2 sockets (au lieu de 8) -> ~6KB RAM economisee
+#define MAX_SOCK_NUM 2  
 #include <Ethernet.h>
-#include <ArduinoHttpClient.h>
 #include <WiFiManager.h>
 #include <EthernetUdp.h>
 #include <WiFiUdp.h>
 #include <Preferences.h>
 
-// Prototypes de fonctions
-extern bool ecranErreurActif;
-extern bool setupTermine;
+
+bool ecranErreurActif = false;
+bool setupTermine = false;
 void afficherErreurWiFiDetaillee(wl_status_t st);
 void modeConfigCallback(WiFiManager *monWm);
 void sauvegarderParamsCallback();
@@ -87,6 +84,29 @@ void texteCentre(String texte, int y, uint16_t coul, int taille);
 void dessinerCorbeille(int cx, int cy, int size, uint16_t coul);
 String httpPostJSON(const char* endpoint, String body);
 
+// Constantes de couleur ILI9341 pour rétro-compatibilité
+#ifndef ILI9341_BLACK
+#define ILI9341_BLACK       0x0000
+#define ILI9341_NAVY        0x000F
+#define ILI9341_DARKGREEN   0x03E0
+#define ILI9341_DARKCYAN    0x03EF
+#define ILI9341_MAROON      0x7800
+#define ILI9341_PURPLE      0x780F
+#define ILI9341_OLIVE       0x7BE0
+#define ILI9341_LIGHTGREY   0xC618
+#define ILI9341_DARKGREY    0x7BEF
+#define ILI9341_BLUE        0x001F
+#define ILI9341_GREEN       0x07E0
+#define ILI9341_CYAN        0x07FF
+#define ILI9341_RED         0xF800
+#define ILI9341_MAGENTA     0xF81F
+#define ILI9341_YELLOW      0xFFE0
+#define ILI9341_WHITE       0xFFFF
+#define ILI9341_ORANGE      0xFD20
+#define ILI9341_GREENYELLOW 0xAFE5
+#define ILI9341_PINK        0xF81F
+#endif
+
 // ======================================================================
 // PALETTE DE DESIGN CORPORATE (doit rester ici, dans le fichier principal,
 // pour etre visible par tous les autres .ino : capteur, display, reseau)
@@ -114,8 +134,8 @@ int empCount = 0;
 String matriculeSaisi = "";
 
 //---------Ethernet (DHCP Dynamique)-------------
-#define ETH_CS 22
-#define ETH_RST_PIN 15  // A CABLER sur la broche RST du module W5500
+#define ETH_CS -1     // Desactive (-1) si le module Ethernet W5500 n'est pas branche, pour un demarrage instantane sans blocage
+#define ETH_RST_PIN -1 // Reset W5500 relie au 3.3V (Power-on Reset)
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x01 };
 
 bool ethernetActif = false;
@@ -124,7 +144,7 @@ bool portailActif = false;
 EthernetClient ethClient;
 WiFiClient wifiClient;
 
-char SERVER_HOST_NAME[64] = "";
+char SERVER_HOST_NAME[64] = "192.168.1.14";
 char ETH_STATIC_IP[32] = "";
 char ETH_STATIC_GATEWAY[32] = "";
 char ETH_STATIC_SUBNET[32] = "";
@@ -149,9 +169,9 @@ EthernetUDP ntpUDPEthernet;
 WiFiUDP ntpUDPWifi;
 const int NTP_PORT_LOCAL = 8888;
 const char* NTP_SERVEUR = "pool.ntp.org";
-long decalageEpoch = 0;  // difference entre millis() et l'heure reelle, en secondes
-int decalageAjustementSec = 25; // Ajustement de +25s pour un alignement parfait de l'horloge
-bool heureInitialisee = false;
+long decalageEpoch = 1789844400;  // Epoch local par defaut (mis a jour dynamiquement par le serveur)
+int decalageAjustementSec = 0;
+bool heureInitialisee = true;
 
 unsigned long dernierEssaiSyncHeure = 0;
 const unsigned long INTERVALLE_RESYNC_HEURE = 60000; // 1 min si echec, puis toutes les 6h si ok
@@ -164,40 +184,105 @@ const char* DEVICE_ID = "ESP32_001";
 const char* DEVICE_KEY = "maBorneEsp32Secrete2026";
 
 const char* NOM_ENTREPRISE = "Kernel Solutions & Innovations";
-//--------Keypad--------
-const byte ROWS = 4;
-const byte COLS = 4;
 
-char keys[ROWS][COLS] = {
-  { '1', '2', '3', 'A' },
-  { '4', '5', '6', 'B' },
-  { '7', '8', '9', 'C' },
-  { '*', '0', '#', 'D' }
+// -------- KEYPAD I2C VIA PCF8574T --------
+uint8_t pcfAddress = 0x27;
+
+const char pcfKeys[4][4] = {
+  { '1', '4', '7', '*' },
+  { '2', '5', '8', '0' },
+  { '3', '6', '9', '#' },
+  { 'A', 'B', 'C', 'D' }
 };
 
-byte rowPins[ROWS] = { 32, 33, 25, 26 };
-byte colPins[COLS] = { 27, 14, 13, 34 }; // Broche D34 (Entree seule) attribuee a la Colonne 4 du clavier
+char lireTouchePCF() {
+  for (byte r = 0; r < 4; r++) {
+    byte dataOut = ~(1 << r) | 0xF0;
+    Wire.beginTransmission(pcfAddress);
+    Wire.write(dataOut);
+    Wire.endTransmission();
 
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+    Wire.requestFrom(pcfAddress, (uint8_t)1);
+    if (Wire.available()) {
+      byte dataIn = Wire.read();
+      for (byte c = 0; c < 4; c++) {
+        if (!(dataIn & (1 << (c + 4)))) {
+          return pcfKeys[r][c];
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+struct KeypadWrapper {
+  char lastKeyReturned = 0;
+  char keyBuffer = 0;
+
+  char readHardware() {
+    char key = lireTouchePCF();
+    if (key == 0) {
+      lastKeyReturned = 0;
+      return 0;
+    }
+    if (key != lastKeyReturned) {
+      lastKeyReturned = key;
+      delay(15); // Anti-rebond et stabilisation du contact
+      return key; // Renvoie la touche une seule fois par appui
+    }
+    return 0;
+  }
+
+  char getKey() {
+    if (keyBuffer != 0) {
+      char k = keyBuffer;
+      keyBuffer = 0;
+      return k;
+    }
+    return readHardware();
+  }
+
+  void poll() {
+    if (keyBuffer == 0) {
+      char k = readHardware();
+      if (k != 0) {
+        keyBuffer = k;
+      }
+    }
+  }
+};
+
+KeypadWrapper keypad;
 
 
-// -------- TFT --------
-#define TFT_CS 5
-#define TFT_DC 2
-#define TFT_RST 4
+// -------- TFT BUS PARALLÈLE 8-BIT (240x320) --------
+#define TFT_DC  5
+#define TFT_CS  17 // Broche CS TFT (Indispensable pour le controleur ILI9341)
+#define TFT_WR  16
+#define TFT_RD  -1 // relie au 3.3V
+#define TFT_RST 15 // broche de Reset actif
 
-Adafruit_ILI9341 tft(TFT_CS, TFT_DC, TFT_RST);
+Arduino_DataBus *tftBus = new Arduino_ESP32PAR8(
+    TFT_DC, TFT_CS, TFT_WR, TFT_RD,
+    32 /* D0 */, 25 /* D1 */, 26 /* D2 */, 27 /* D3 */,
+    14 /* D4 */, 13 /* D5 */, 4  /* D6 */, 2  /* D7 */
+);
+
+Arduino_GFX *tftPtr = new Arduino_ILI9341(tftBus, TFT_RST, 3 /* Rotation horizontale */);
+#define tft (*tftPtr)
 
 
 // -------- CAPTEUR EMPREINTE --------
-#define FINGER_RX 16
-#define FINGER_TX 17
+#define FINGER_RX 34
+#define FINGER_TX 12 // Broche TX capteur (GPIO 12)
 
 HardwareSerial fingerSerial(2);
 Adafruit_Fingerprint finger(&fingerSerial);
 
 unsigned long dernierePollDeletion = 0;
-const unsigned long INTERVALLE_POLL_DELETION = 5000;
+const unsigned long INTERVALLE_POLL_DELETION = 120000; // 2 minutes
+bool capteurPresent = false;
+unsigned long dernierPollCapteur = 0;
 
 // ID automatique
 uint8_t nouvelID;
@@ -299,68 +384,79 @@ void setup() {
   Serial.println("DEBUT SETUP");
   Serial.flush();
 
-  // ── Etape 1 : Isolation des CS avant tout ──────────────────────
-  // Les deux puces partagent le bus SPI. Il FAUT forcer leurs CS a HIGH
-  // avant d'initialiser quoi que ce soit, sinon elles ecoutent toutes
-  // les deux en meme temps et se corrompent mutuellement.
-  pinMode(TFT_CS, OUTPUT);  digitalWrite(TFT_CS, HIGH);
-  pinMode(ETH_CS, OUTPUT);  digitalWrite(ETH_CS, HIGH);
+  // ── Etape 1 : Init I2C (PCF8574T) & Init TFT 8-Bit ────────────
+  Wire.begin(21, 22);
+  Wire.setClock(400000);
+  for (byte address = 1; address < 127; address++) {
+    Wire.beginTransmission(address);
+    if (Wire.endTransmission() == 0) {
+      pcfAddress = address;
+      Serial.print("[SETUP] PCF8574T trouve a 0x");
+      Serial.println(pcfAddress, HEX);
+    }
+  }
 
-  // ── Etape 2 : Reset W5500 ──────────────────────────────────────
-  Serial.println("[SETUP] Reset W5500...");
-  pinMode(ETH_RST_PIN, OUTPUT);
-  digitalWrite(ETH_RST_PIN, LOW);
-  delay(200);
-  digitalWrite(ETH_RST_PIN, HIGH);
+  // Hardware Reset de l'ecran TFT (GPIO 15)
+  pinMode(TFT_RST, OUTPUT);
+  digitalWrite(TFT_RST, HIGH); delay(50);
+  digitalWrite(TFT_RST, LOW);  delay(150);
+  digitalWrite(TFT_RST, HIGH); delay(150);
 
-  // Delai adaptatif : au cold boot (branchement USB/alim), le W5500 a besoin
-  // de ~2s pour que sa 3.3V se stabilise et son oscillateur demarre.
-  // Apres un software reset, la puce est deja chaude -> 500ms suffisent.
-  esp_reset_reason_t resetRaison = esp_reset_reason();
-  bool coldBoot = (resetRaison == ESP_RST_POWERON || resetRaison == ESP_RST_BROWNOUT);
-  int delaiStabilisation = coldBoot ? 2500 : 500;
-  Serial.println("[SETUP] Type reset=" + String(resetRaison) +
-                 (coldBoot ? " (cold boot)" : " (soft reset)") +
-                 " -> attente " + String(delaiStabilisation) + "ms");
-  delay(delaiStabilisation);
-
-  // ── Etape 3 : Init SPI + Init TFT (bus SPI prêt) ──────────
-  SPI.begin(18, 19, 23, TFT_CS);
   tft.begin();
-  tft.setRotation(1);
+  tft.setRotation(3);       // Rotation 270° (Orientation horizontale validée)
+  tft.invertDisplay(true);  // Inversion activée pour que le NOIR soit vrai NOIR
   tft.fillScreen(COULEUR_FOND);
-  digitalWrite(TFT_CS, HIGH); // Libérer le bus SPI TFT
 
-  Ethernet.init(ETH_CS);
+  // ── Etape 2 : Reset & Init W5500 Ethernet (SPI) ────────────────
+  if (ETH_CS >= 0) {
+    pinMode(ETH_CS, OUTPUT); digitalWrite(ETH_CS, HIGH);
+    Serial.println("[SETUP] Reset W5500...");
+    if (ETH_RST_PIN >= 0) {
+      pinMode(ETH_RST_PIN, OUTPUT);
+      digitalWrite(ETH_RST_PIN, LOW);
+      delay(200);
+      digitalWrite(ETH_RST_PIN, HIGH);
+    }
 
-  // ── TEST SPI BRUT (diagnostic cablage W5500) ──────────────────
-  Serial.println("[DIAG] === Test SPI brut W5500 ===");
-  Serial.println("[DIAG] Pins: SCK=18 MISO=19 MOSI=23 CS=22 RST=15");
+    // Delai adaptatif : stabilisation rapide
+    int delaiStabilisation = 300;
+    Serial.println("[SETUP] Attente stabilisation W5500: " + String(delaiStabilisation) + "ms");
+    delay(delaiStabilisation);
 
-  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
-  digitalWrite(ETH_CS, LOW);
-  delayMicroseconds(10);
-  SPI.transfer(0x00);
-  SPI.transfer(0x39);
-  SPI.transfer(0x00);
-  uint8_t vMode0 = SPI.transfer(0x00);
-  digitalWrite(ETH_CS, HIGH);
-  SPI.endTransaction();
-  Serial.printf("[DIAG] Mode0 VERSIONR = 0x%02X (attendu 0x04)\n", vMode0);
+    SPI.begin(18, 19, 23, ETH_CS);
+    Ethernet.init(ETH_CS);
 
-  delay(10);
-  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-  digitalWrite(ETH_CS, LOW);
-  delayMicroseconds(10);
-  SPI.transfer(0x00);
-  SPI.transfer(0x39);
-  SPI.transfer(0x00);
-  uint8_t vMode3 = SPI.transfer(0x00);
-  digitalWrite(ETH_CS, HIGH);
-  SPI.endTransaction();
-  Serial.printf("[DIAG] Mode3 VERSIONR = 0x%02X (attendu 0x04)\n", vMode3);
-  Serial.println("[DIAG] ===============================");
-  Serial.flush();
+    // ── TEST SPI BRUT (diagnostic cablage W5500) ──────────────────
+    Serial.println("[DIAG] === Test SPI brut W5500 ===");
+    Serial.println("[DIAG] Pins: SCK=18 MISO=19 MOSI=23 CS=" + String(ETH_CS) + " RST=" + String(ETH_RST_PIN));
+
+    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+    digitalWrite(ETH_CS, LOW);
+    delayMicroseconds(10);
+    SPI.transfer(0x00);
+    SPI.transfer(0x39);
+    SPI.transfer(0x00);
+    uint8_t vMode0 = SPI.transfer(0x00);
+    digitalWrite(ETH_CS, HIGH);
+    SPI.endTransaction();
+    Serial.printf("[DIAG] Mode0 VERSIONR = 0x%02X (attendu 0x04)\n", vMode0);
+
+    delay(10);
+    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+    digitalWrite(ETH_CS, LOW);
+    delayMicroseconds(10);
+    SPI.transfer(0x00);
+    SPI.transfer(0x39);
+    SPI.transfer(0x00);
+    uint8_t vMode3 = SPI.transfer(0x00);
+    digitalWrite(ETH_CS, HIGH);
+    SPI.endTransaction();
+    Serial.printf("[DIAG] Mode3 VERSIONR = 0x%02X (attendu 0x04)\n", vMode3);
+    Serial.println("[DIAG] ===============================");
+    Serial.flush();
+  } else {
+    Serial.println("[SETUP] Ethernet W5500 desactive (ETH_CS < 0) — Passage direct au WiFi.");
+  }
 
   // ── Etape 4 : Demarrage Ethernet (avec affichage TFT) ──────────
   ethernetActif = demarrerEthernet();
@@ -481,6 +577,12 @@ void setup() {
     wm.server->addMiddleware([](WebServer &server, Middleware::Callback next) {
       String uri = server.uri();
 
+      // Reponse 204 instantanee pour les icones et favicons du navigateur afin de ne pas surcharger l'ESP32
+      if (uri.endsWith(".ico") || uri.endsWith(".png") || uri.endsWith(".svg") || uri.endsWith(".map")) {
+        server.send(204);
+        return false;
+      }
+
       if (uri == "/login") {
         return next();
       }
@@ -559,10 +661,17 @@ void setup() {
 
     connecterWiFiSTA();
 
-    // Attendre jusqu'a 12 secondes l'établissement de la connexion Wi-Fi
+    // Attente intelligente : 5s max si SSID configure, 500ms seulement si aucun SSID n'est enregistre !
+    bool aSSID = (strlen(WIFI_CONFIG_SSID) > 0 || WiFi.SSID().length() > 0);
+    unsigned long maxAttente = aSSID ? 5000 : 500;
     unsigned long startWait = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startWait < 12000) {
-      delay(250);
+    while (WiFi.status() != WL_CONNECTED && millis() - startWait < maxAttente) {
+      char k = keypad.getKey();
+      if (k == '#') {
+        bipTouche();
+        break; // Sortir tout de suite pour lancer le portail de configuration
+      }
+      delay(50);
       Serial.print(".");
       Serial.flush();
     }
@@ -576,14 +685,28 @@ void setup() {
       Serial.println("[WiFi] Echec de connexion Wi-Fi. Lancement du portail de configuration...");
       reconfigurerWiFi();
     }
+
+    // Demarrer le serveur web 24/7 en arriere-plan pour le Wi-Fi (IP locale et AP 192.168.4.1)
+    IPAddress apIP(192, 168, 4, 1);
+    IPAddress apGW(192, 168, 4, 1);
+    IPAddress apSN(255, 255, 255, 0);
+    WiFi.softAPConfig(apIP, apGW, apSN);
+    WiFi.softAP("Pointeuse-Config", "12345678");
+    wm.setConfigPortalTimeout(0);
+    wm.startWebPortal();
+    Serial.println("[WEB] Serveur Web BioPulse OS actif (IP WiFi: " + WiFi.localIP().toString() + ", AP: 192.168.4.1)");
   }
 
 
 
   afficherMessage("Recherche serveur...", ILI9341_WHITE);
-  if (decouvrirServeurUDP()) {
-    afficherMessage("Serveur detecte :\n" + String(SERVER_HOST_NAME), ILI9341_GREEN);
-    delay(1200);
+  if (strlen(SERVER_HOST_NAME) == 0 || !testerConnexionServeur()) {
+    if (decouvrirServeurUDP()) {
+      afficherMessage("Serveur detecte :\n" + String(SERVER_HOST_NAME), ILI9341_GREEN);
+      delay(1200);
+    }
+  } else {
+    Serial.println("[SETUP] Serveur deja configure et joignable : " + String(SERVER_HOST_NAME));
   }
 
   afficherMessage("Synchro heure...", ILI9341_WHITE);
@@ -615,27 +738,19 @@ void setup() {
 
 
   if (finger.verifyPassword()) {
-    Serial.println("Capteur OK");
+    capteurPresent = true;
+    Serial.println("Capteur empreinte OK");
     afficherMessage("Capteur OK", ILI9341_GREEN);
+    finger.getTemplateCount();
+    Serial.print("Empreintes presentes : ");
+    Serial.println(finger.templateCount);
+    delay(500);
   } else {
-    Serial.println("Erreur capteur");
-    afficherMessage("Erreur capteur", ILI9341_RED);
-
-    while (1)
-      ;
+    capteurPresent = false;
+    Serial.println("[SETUP] Capteur d'empreinte non detecte (Non cable) -> Mode Ecran + Clavier seul");
+    afficherMessage("Ecran & Clavier OK", ILI9341_GREEN);
+    delay(1000);
   }
-
-
-
-  finger.getTemplateCount();
-
-
-  Serial.print("Empreintes presentes : ");
-  Serial.println(finger.templateCount);
-
-
-
-  delay(500);
   afficherMessage("Verif reseau & serveur...", ILI9341_WHITE);
   attendreReseauEtServeur();
 
@@ -659,6 +774,11 @@ bool estPointageSucces(String jsonReponse) {
 // -------- LOOP --------
 
 void loop() {
+  char c = keypad.getKey();
+  if (c) {
+    bipTouche();
+  }
+
   wm.process();
   gererServeurWebEthernet();
 
@@ -672,9 +792,10 @@ void loop() {
       afficherAccueil();
     }
 
-    if (millis() - dernierEssaiSyncHeure > 3600000UL) {
+    unsigned long intervalleSync = heureInitialisee ? 300000UL : 15000UL;
+    if (millis() - dernierEssaiSyncHeure > intervalleSync) {
       dernierEssaiSyncHeure = millis();
-      synchroniserHeure(); // heure serveur uniquement
+      synchroniserHeure(); // Re-synchronisation avec le serveur toutes les 5 minutes
     }
 
     mettreAJourHorloge(false);
@@ -682,11 +803,6 @@ void loop() {
       dernierePollDeletion = millis();
       verifierSuppressions();
     }
-  }
-
-  char c = keypad.getKey();
-  if (c) {
-    bipTouche();
   }
 
   // AJOUT
@@ -749,7 +865,11 @@ void loop() {
 
           afficherMessage("Enroler empreinte ?\n#=Oui *=Non", ILI9341_YELLOW);
           char confirm = 0;
-          while (!confirm) confirm = keypad.getKey();
+          while (!confirm) {
+            confirm = keypad.getKey();
+            yield();
+            delay(10);
+          }
 
           if (confirm == '#') {
             nouvelID = trouverIDLibre();
@@ -795,12 +915,30 @@ void loop() {
   }
 
   if (c == '#') {
-    if (demanderPin()) {
-    afficherEcranIPs();
-  }
+    if (ecranErreurActif) {
+      reconfigurerWiFi();
+    } else {
+      if (demanderPin()) {
+        afficherEcranIPs();
+      }
+    }
   }
 
-  int id = reconnaitreEmpreinte();
+  static unsigned long dernierCheckCapteur = 0;
+  if (!capteurPresent && (millis() - dernierCheckCapteur > 2000)) {
+    dernierCheckCapteur = millis();
+    if (finger.verifyPassword()) {
+      capteurPresent = true;
+      finger.getTemplateCount();
+      Serial.println("[CAPTEUR] Capteur d'empreinte detecte et active !");
+    }
+  }
+
+  int id = -2;
+  if (capteurPresent && (millis() - dernierPollCapteur > 60)) {
+    dernierPollCapteur = millis();
+    id = reconnaitreEmpreinte();
+  }
 
   if (id >= 0) {
     Serial.print("Empreinte trouvee ID : ");
